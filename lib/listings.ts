@@ -1,4 +1,5 @@
-import { and, asc, eq, gte, ilike, lte } from "drizzle-orm";
+import { and, asc, eq, gte, ilike, inArray, lte } from "drizzle-orm";
+import type { BatchItem } from "drizzle-orm/batch";
 
 import {
   amenities,
@@ -8,6 +9,7 @@ import {
   livingConfigEnum,
   propertyTypeEnum,
   users,
+  utilityCoverageEnum,
 } from "@/drizzle/schema";
 import { parseDollarInput } from "@/lib/money";
 import { db } from "@/lib/db";
@@ -231,6 +233,96 @@ export async function getListingById(
       email: listing.hostEmail,
     },
   };
+}
+
+export type CreateListingInput = {
+  userId: string;
+  title: string;
+  description: string;
+  propertyType: (typeof propertyTypeEnum.enumValues)[number];
+  livingConfig: (typeof livingConfigEnum.enumValues)[number];
+  utilities: (typeof utilityCoverageEnum.enumValues)[number];
+  utilitiesNotes?: string;
+  priceCents: number;
+  depositCents: number;
+  addressStreet?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  latitude: string | null;
+  longitude: string | null;
+  availableStart: string;
+  availableEnd: string;
+  amenityIds: string[];
+  imageUrls: string[];
+};
+
+export async function getAmenities() {
+  return db.select().from(amenities).orderBy(asc(amenities.name));
+}
+
+export async function createListing(input: CreateListingInput): Promise<string> {
+  const listingId = crypto.randomUUID();
+  const uniqueAmenityIds = [...new Set(input.amenityIds)];
+
+  let validAmenityIds: string[] = [];
+  if (uniqueAmenityIds.length > 0) {
+    const catalog = await db
+      .select({ id: amenities.id })
+      .from(amenities)
+      .where(inArray(amenities.id, uniqueAmenityIds));
+    validAmenityIds = catalog.map((row) => row.id);
+  }
+
+  const statements: BatchItem<"pg">[] = [
+    db.insert(listings).values({
+      id: listingId,
+      userId: input.userId,
+      title: input.title,
+      description: input.description,
+      propertyType: input.propertyType,
+      livingConfig: input.livingConfig,
+      utilities: input.utilities,
+      utilitiesNotes: input.utilitiesNotes,
+      status: "active",
+      priceCents: input.priceCents,
+      depositCents: input.depositCents,
+      addressStreet: input.addressStreet,
+      city: input.city,
+      state: input.state,
+      postalCode: input.postalCode,
+      latitude: input.latitude,
+      longitude: input.longitude,
+      availableStart: input.availableStart,
+      availableEnd: input.availableEnd,
+    }),
+  ];
+
+  if (validAmenityIds.length > 0) {
+    statements.push(
+      db.insert(listingAmenities).values(
+        validAmenityIds.map((amenityId) => ({
+          listingId,
+          amenityId,
+        })),
+      ),
+    );
+  }
+
+  if (input.imageUrls.length > 0) {
+    statements.push(
+      db.insert(listingImages).values(
+        input.imageUrls.map((blobUrl, displayOrder) => ({
+          listingId,
+          blobUrl,
+          displayOrder,
+        })),
+      ),
+    );
+  }
+
+  await db.batch(statements as [BatchItem<"pg">, ...BatchItem<"pg">[]]);
+  return listingId;
 }
 
 export function formatPropertyType(value: string): string {

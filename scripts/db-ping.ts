@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { count, eq } from "drizzle-orm";
+import { count, eq, isNotNull } from "drizzle-orm";
 
 config({ path: ".env.local" });
 
@@ -18,16 +18,27 @@ async function ping() {
     .from(listings)
     .where(eq(listings.status, "active"));
 
+  const [{ value: hashedUserCount }] = await db
+    .select({ value: count() })
+    .from(users)
+    .where(isNotNull(users.passwordHash));
+
   console.log(
-    `Database connected. Amenities: ${amenityCount}, Users: ${userCount}, Active listings: ${listingCount}`,
+    `Database connected. Amenities: ${amenityCount}, Users: ${userCount}, Hashed passwords: ${hashedUserCount}, Active listings: ${listingCount}`,
   );
 
   if (amenityCount !== 7) {
     throw new Error(`Expected 7 amenities, found ${amenityCount}`);
   }
 
-  if (userCount < 1) {
-    throw new Error(`Expected at least 1 user, found ${userCount}`);
+  if (userCount < 4) {
+    throw new Error(`Expected at least 4 users, found ${userCount}`);
+  }
+
+  if (hashedUserCount < 4) {
+    throw new Error(
+      `Expected at least 4 users with hashed passwords, found ${hashedUserCount}`,
+    );
   }
 
   if (listingCount < 8) {

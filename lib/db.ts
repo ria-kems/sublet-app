@@ -7,7 +7,7 @@ type Database = NeonHttpDatabase<typeof schema>;
 
 let dbInstance: Database | undefined;
 
-function getDb(): Database {
+export function getDb(): Database {
   if (dbInstance) {
     return dbInstance;
   }

@@ -11,6 +11,7 @@ import {
   users,
 } from "@/drizzle/schema";
 import { db } from "@/lib/db";
+import { hashPasswordSync } from "@/lib/password";
 
 const AMENITY_NAMES = [
   "Wi-Fi",
@@ -23,14 +24,50 @@ const AMENITY_NAMES = [
 ] as const;
 
 const HOST_USER_ID = "11111111-1111-4111-8111-111111111111";
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD;
 
-const HOST = {
-  id: HOST_USER_ID,
-  name: "Alex Rivera",
-  email: "alex.rivera.sublets@example.com",
-  image:
-    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop",
-};
+if (!DEMO_PASSWORD) {
+  throw new Error("Set DEMO_PASSWORD in .env.local before running db:seed.");
+}
+
+const DEMO_PASSWORD_HASH = hashPasswordSync(DEMO_PASSWORD);
+
+const SEED_USERS = [
+  {
+    id: HOST_USER_ID,
+    name: "Alex Rivera",
+    email: "alex.rivera.sublets@example.com",
+    image:
+      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop",
+    passwordHash: DEMO_PASSWORD_HASH,
+  },
+  {
+    id: "11111111-1111-4111-8111-111111111112",
+    name: "Jordan Lee",
+    email: "jordan.lee@example.com",
+    image:
+      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop",
+    passwordHash: DEMO_PASSWORD_HASH,
+  },
+  {
+    id: "11111111-1111-4111-8111-111111111113",
+    name: "Sam Patel",
+    email: "sam.patel@example.com",
+    image:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop",
+    passwordHash: DEMO_PASSWORD_HASH,
+  },
+  {
+    id: "11111111-1111-4111-8111-111111111114",
+    name: "Riley Chen",
+    email: "riley.chen@example.com",
+    image:
+      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop",
+    passwordHash: DEMO_PASSWORD_HASH,
+  },
+] as const;
+
+const HOST = SEED_USERS[0];
 
 const SEED_LISTINGS = [
   {
@@ -238,8 +275,20 @@ async function seedAmenities() {
   }
 }
 
-async function seedHost() {
-  await db.insert(users).values(HOST).onConflictDoNothing({ target: users.email });
+async function seedUsers() {
+  for (const user of SEED_USERS) {
+    await db
+      .insert(users)
+      .values(user)
+      .onConflictDoUpdate({
+        target: users.email,
+        set: {
+          name: user.name,
+          image: user.image,
+          passwordHash: user.passwordHash,
+        },
+      });
+  }
 
   const [host] = await db
     .select()
@@ -251,7 +300,9 @@ async function seedHost() {
     throw new Error("Failed to seed host user.");
   }
 
-  console.log(`Host user ready: ${host.email}`);
+  console.log(
+    `Seeded ${SEED_USERS.length} users with hashed passwords. Host: ${host.email}`,
+  );
   return host;
 }
 
@@ -326,7 +377,7 @@ async function seedListings(hostId: string) {
 
 async function seed() {
   await seedAmenities();
-  const host = await seedHost();
+  const host = await seedUsers();
   await seedListings(host.id);
   console.log("Seed complete.");
 }

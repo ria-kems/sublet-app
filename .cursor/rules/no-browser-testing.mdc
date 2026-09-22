@@ -1,0 +1,12 @@
+---
+description: Skip browser snapshot and UI automation testing; the user tests manually
+alwaysApply: true
+---
+
+# Manual testing only
+
+Do not use browser tools, snapshots, screenshots, or end-to-end UI automation to verify changes.
+
+After coding, stop. The user tests the app manually. Do not open localhost in a browser, click through flows, or wait on visual verification before declaring work done.
+
+CLI checks that stay in code (typecheck, lint, build, db scripts) are fine when they help the change.

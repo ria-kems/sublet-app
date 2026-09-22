@@ -44,6 +44,7 @@ export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 255 }),
   email: varchar("email", { length: 255 }).notNull().unique(),
+  passwordHash: text("password_hash"),
   emailVerified: timestamp("email_verified", { withTimezone: true }),
   image: text("image"),
   createdAt: timestamp("created_at", { withTimezone: true })
@@ -66,13 +67,13 @@ export const accounts = pgTable(
     providerAccountId: varchar("provider_account_id", {
       length: 255,
     }).notNull(),
-    refreshToken: text("refresh_token"),
-    accessToken: text("access_token"),
-    expiresAt: bigint("expires_at", { mode: "number" }),
-    tokenType: varchar("token_type", { length: 50 }),
+    refresh_token: text("refresh_token"),
+    access_token: text("access_token"),
+    expires_at: bigint("expires_at", { mode: "number" }),
+    token_type: varchar("token_type", { length: 50 }),
     scope: text("scope"),
-    idToken: text("id_token"),
-    sessionState: text("session_state"),
+    id_token: text("id_token"),
+    session_state: text("session_state"),
   },
   (table) => [
     unique("accounts_provider_provider_account_id_unique").on(

@@ -62,6 +62,15 @@ npm run db:ping
 
 `npm run build` passes with DaisyUI. Migration push/seed were not run in-session (no `DATABASE_URL` configured).
 
-## Next phase
+## Read path (implemented)
 
-**Read path** — Seed one host + 8 listings; build header, landing, `/search`, `/listings/[id]`. No auth required on browse routes.
+Seeded host + 8 listings; landing, `/search`, `/listings/[id]` work without login.
+
+## Auth, write path, and ship (implemented)
+
+Phases 3–5 shipped together, then auth was switched off Google OAuth:
+
+- Auth.js credentials + JWT; `/create-listing` is the only gated page
+- Four seeded Neon users with bcrypt password hashes
+- Create form, Vercel Blob client uploads, Mapbox geocoding, batched insert
+- README + DEMO.md for reviewers
