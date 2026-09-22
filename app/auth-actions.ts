@@ -31,12 +31,20 @@ export async function signInWithCredentials(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   const callbackUrl = safeRedirectTo(formData.get("callbackUrl"));
 
-  const result = await signIn("credentials", {
-    email,
-    password,
-    redirect: false,
-    redirectTo: callbackUrl,
-  });
+  let result: string | undefined;
+  try {
+    result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+      redirectTo: callbackUrl,
+    });
+  } catch (error) {
+    console.error("[auth] Sign-in failed", error);
+    redirect(
+      `/signin?callbackUrl=${encodeURIComponent(callbackUrl)}&error=CredentialsSignin`,
+    );
+  }
 
   if (typeof result === "string" && isAuthErrorRedirect(result)) {
     redirect(

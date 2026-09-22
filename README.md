@@ -16,7 +16,8 @@ See [DEMO.md](DEMO.md) for assignment notes and full account list.
 
 ```bash
 cp .env.example .env.local
-# Fill DATABASE_URL, AUTH_SECRET, DEMO_PASSWORD, Blob, and Mapbox tokens
+# Fill DATABASE_URL, AUTH_SECRET, BLOB_READ_WRITE_TOKEN, DEMO_PASSWORD
+# Mapbox tokens are optional (maps skip if empty)
 npm install
 npm run db:push
 npm run db:seed

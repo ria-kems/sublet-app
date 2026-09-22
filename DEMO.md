@@ -37,17 +37,18 @@ Expected: amenities = 7, users ≥ 4, hashed passwords ≥ 4, active listings �
 
 ## Environment
 
-Copy `.env.example` to `.env.local` (and set the same keys on Vercel).
+Copy `.env.example` to `.env.local`. Next.js only loads `.env.local` locally. Use the same keys on Vercel **Production** (and Preview). Do not pull the Vercel **Development** env over `.env.local` — that environment is a different Neon database.
 
-| Variable | Where it comes from |
-| --- | --- |
-| `DATABASE_URL` | Neon pooled connection string |
-| `AUTH_SECRET` | `openssl rand -base64 32` |
-| `AUTH_URL` | `http://localhost:3000` locally, the Vercel origin in production |
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob store on the project |
-| `NEXT_PUBLIC_MAPBOX_TOKEN` | Mapbox public token (map tiles) |
-| `MAPBOX_GEOCODING_TOKEN` | Mapbox secret token (server geocoding) |
-| `DEMO_PASSWORD` | Shared password for seeded demo users (`db:seed`) |
+| Variable | Runtime? | Where it comes from |
+| --- | --- | --- |
+| `DATABASE_URL` | yes | Neon **pooled** connection string (`-pooler` in the hostname) |
+| `AUTH_SECRET` | yes | `openssl rand -base64 32` |
+| `BLOB_READ_WRITE_TOKEN` | yes | Vercel Blob store on the project |
+| `NEXT_PUBLIC_MAPBOX_TOKEN` | optional | Mapbox public token (map tiles) |
+| `MAPBOX_GEOCODING_TOKEN` | optional | Mapbox secret token (server geocoding) |
+| `DEMO_PASSWORD` | no (seed only) | Shared password for seeded demo users (`npm run db:seed`) |
+
+Google OAuth vars (`AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`) and `AUTH_URL` are unused. Auth.js uses credentials + `trustHost`.
 
 ## Deploy
 

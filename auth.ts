@@ -28,27 +28,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        const [user] = await getDb()
-          .select()
-          .from(users)
-          .where(eq(users.email, email))
-          .limit(1);
+        try {
+          const [user] = await getDb()
+            .select()
+            .from(users)
+            .where(eq(users.email, email))
+            .limit(1);
 
-        if (!user?.passwordHash) {
+          if (!user?.passwordHash) {
+            return null;
+          }
+
+          const valid = await verifyPassword(password, user.passwordHash);
+          if (!valid) {
+            return null;
+          }
+
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.image,
+          };
+        } catch (error) {
+          console.error("[auth] Database lookup failed during sign-in", error);
           return null;
         }
-
-        const valid = await verifyPassword(password, user.passwordHash);
-        if (!valid) {
-          return null;
-        }
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          image: user.image,
-        };
       },
     }),
   ],
